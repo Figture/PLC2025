@@ -27,7 +27,7 @@ def main():
     with open("stock.json", "w", encoding="utf-8") as f:
         json.dump(lexer.dados, f, indent=4, ensure_ascii=False)
 
-    print("Até à próxima")
+    print("maq: Até à próxima")
     return
 
 
