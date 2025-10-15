@@ -1,9 +1,10 @@
 import ply.lex as lex
-import re
+import re, math
 
 
 states = (
     ('dinheiro', 'exclusive'),
+    ('selecao', 'exclusive')
     # num estado exclusivo, apenas aplicamos os tokens e regras para esse estado
     # por outro lado, num estado inclusivo, as regras e tokens desse estado juntam-se às outras regras e tokens
     # o estado inicial chama-se 'INITIAL' e não é preciso defini-lo
@@ -19,7 +20,6 @@ tokens = (
     'SELECIONAR',
     # 'SAIR',
     # 'SALDO',
-    # 'SAIR'
 )
 
 
@@ -58,19 +58,36 @@ def t_dinheiro_CENT(t):
 
 def t_dinheiro_TERMINATOR(t):
     r'\.'
-    print(f"Saldo = {t.lexer.euro}e{t.lexer.cent}c")
+    eur, centi = math.mod(t.lexer.euro)
+    print(f"Saldo = {eur}e{centi}c")
     t.lexer.begin('INITIAL')
     return t
 
 def t_SELECIONAR(t):
     r'SELECIONAR'
-    t.lexer.begin('dinheiro')
+    t.lexer.begin('selecao')
     return t
-#ACABAR ISTO
-def t_dinheiro_PROD(t):
-    r'[A-B]\d{2}'
+#verificar se posso usar t.lexer.dados[product]["x"]
+def t_selecao_PROD(t):
+    r'[A-Z]\d{2}'
     if hasattr(t.lexer, 'dados') and t.lexer.dados:
-        print("ola")
+        product= next((p for p in t.lexer.dados if p["cod"] == t.value), None)
+        if product:
+            if product["quant"] <= 0:
+                print(f'Produto com o código {t.value} está esgotado.')
+                t.lexer.begin('INITIAL')
+                return t
+            else:
+                if t.lexer.euro < product["preco"]:
+                    t.lexer.dados[product]["quant"] -= 1
+                    t.lexer.euro -= product["preco"]
+                    print(f"maq: Pode retirar o produto dispensado {product["nome"]}")
+        else:
+            print(f'Produto com o código {t.value} não existe em stock.')
+        
+    t.lexer.begin('INITIAL')
+    return t
+    
 
 t_ignore = ' \t\n,'
 
